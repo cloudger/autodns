@@ -22,11 +22,41 @@ You use DNS providers that may stop responding without warning (as happened with
 
 ### Requirements
 
-- Rust 1.70 or higher
+- Rust 1.70 or higher (for building from source)
 - Any modern Linux distribution
 - Root/sudo permissions to edit `/etc/resolv.conf`
+- SELinux policy configuration (for RHEL/Rocky Linux/Fedora) - see [SELINUX.md](SELINUX.md)
 
-### Quick Installation (Recommended)
+### Installation Methods
+
+#### Method 1: From Cpehub Repository (Easiest - Tested with Rocky Linux)
+
+If you have a Cpehub repository configured:
+
+```bash
+# Configure repository (one time)
+curl -sL https://repo.cpehub.io/autodns/install-autodns.sh | sudo bash
+
+# Install Autodns
+sudo dnf install autodns
+
+# Enable and start
+sudo systemctl enable --now autodns
+```
+
+See [REPOSITORY.md](repository/REPOSITORY.md) for setting up your own repository.
+
+#### Method 2: From RPM Package
+
+```bash
+# Download or build RPM
+./build-rpm.sh
+
+# Install
+sudo dnf install ~/rpmbuild/RPMS/x86_64/autodns-*.rpm
+```
+
+#### Method 3: Quick Installation from Source (Original Method)
 
 Use the automated installation script:
 
@@ -162,6 +192,18 @@ sudo systemctl status autodns
 ```bash
 sudo journalctl -u autodns -f
 ```
+
+### SELinux Configuration (RHEL/Rocky Linux/Fedora)
+
+If you're running on a system with SELinux enabled (Rocky Linux, RHEL, Fedora), you need to install the SELinux policy:
+
+```bash
+cd selinux/
+make
+sudo make install
+```
+
+For detailed SELinux troubleshooting and configuration options, see [SELINUX.md](SELINUX.md).
 
 ## Operating Modes
 

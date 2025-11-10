@@ -21,3 +21,9 @@ Thumbs.db
 # Backup files
 *.backup
 *.tmp
+
+# RPM files
+rpm/
+
+# Tmp Repo
+repository/
