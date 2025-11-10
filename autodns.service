@@ -22,9 +22,8 @@ StartLimitBurst=5
 # Segurança
 NoNewPrivileges=true
 PrivateTmp=true
-ProtectSystem=strict
+# ProtectSystem desabilitado para permitir modificação de /etc/resolv.conf
 ProtectHome=true
-ReadWritePaths=/etc/resolv.conf /etc/autodns
 
 # Logs
 StandardOutput=journal
