@@ -1,0 +1,38 @@
+[Unit]
+Description=Autodns - Automatic DNS monitoring and benchmarking
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+
+# Caminho para o binário
+ExecStart=/usr/local/bin/autodns --config /etc/autodns/config.yaml run
+
+# Reiniciar automaticamente se falhar
+Restart=on-failure
+RestartSec=10s
+
+# Limite de reinícios
+StartLimitInterval=200s
+StartLimitBurst=5
+
+# Segurança
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/etc/resolv.conf /etc/autodns
+
+# Logs
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=autodns
+
+# Variáveis de ambiente para logs
+Environment="RUST_LOG=info"
+
+[Install]
+WantedBy=multi-user.target

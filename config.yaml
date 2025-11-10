@@ -1,53 +1,65 @@
-# DNS Manager Configuration
+# Autodns Configuration
 #
-# Este arquivo configura o comportamento do DNS Manager
+# This file configures the behavior of the Autodns.
 
-# Lista de servidores DNS para monitorar
+# List of DNS servers to monitor
 dns_servers:
-  # Cloudflare DNS
-  - name: "Cloudflare-1"
-    address: "1.1.1.1"
-  - name: "Cloudflare-2"
-    address: "1.0.0.1"
+    # Cloudflare DNS
+    - name: "Cloudflare-IPv4-1"
+      address: "1.1.1.1"
+    - name: "Cloudflare-IPv4-2"
+      address: "1.0.0.1"
+    - name: "Cloudflare-IPv6-1"
+      address: "2606:4700:4700::1111"
+    - name: "Cloudflare-IPv6-2"
+      address: "2606:4700:4700::1001"
 
-  # Google DNS
-  - name: "Google-1"
-    address: "8.8.8.8"
-  - name: "Google-2"
-    address: "8.8.4.4"
+    # Google DNS
+    - name: "Google-1"
+      address: "8.8.8.8"
+    - name: "Google-2"
+      address: "8.8.4.4"
 
-  # Quad9 DNS
-  - name: "Quad9"
-    address: "9.9.9.9"
+    # Quad9 DNS
+    - name: "Quad9"
+      address: "9.9.9.9"
 
-  # OpenDNS
-  - name: "OpenDNS-1"
-    address: "208.67.222.222"
-  - name: "OpenDNS-2"
-    address: "208.67.220.220"
+    # OpenDNS
+    - name: "OpenDNS-1"
+      address: "208.67.222.222"
+    - name: "OpenDNS-2"
+      address: "208.67.220.220"
 
-  # Hetzner DNS (IPv6) - Exemplo dos que falharam
-  - name: "Hetzner-IPv6-1"
-    address: "2a01:4ff:ff00::add:1"
-  - name: "Hetzner-IPv6-2"
-    address: "2a01:4ff:ff00::add:2"
+    # Hetzner DNS
+    - name: "Hetzner-IPv4-1"
+      address: "185.12.64.1"
+    - name: "Hetzner-IPv4-2"
+      address: "185.12.64.2"
+    - name: "Hetzner-IPv6-1"
+      address: "2a01:4ff:ff00::add:1"
+    - name: "Hetzner-IPv6-2"
+      address: "2a01:4ff:ff00::add:2"
 
-# Modo de operação:
-#   - "check": Apenas verifica se os DNS estão online/offline (não altera resolv.conf)
-#   - "benchmark": Testa latência e atualiza /etc/resolv.conf com os melhores
+# Operating mode:
+#   - "firstonline": Select the first 2 online DNS servers from the list and configure /etc/resolv.conf
+#   - "benchmark": Test latency and update /etc/resolv.conf with the 2 fastest DNS servers
 mode: benchmark
 
-# Intervalo para verificar saúde dos DNS (em segundos)
-# Recomendado: 120 (2 minutos)
-# O programa irá testar se cada DNS está respondendo
-check_interval_seconds: 120
+# Execution interval (in seconds)
+# The program will execute the configured mode at this interval:
+#   - In "firstonline" mode: checks DNS health and updates /etc/resolv.conf
+#   - In "benchmark" mode: measures latency and updates /etc/resolv.conf with fastest servers
+# Recommended values:
+#   - firstonline mode: 300 (5 minutes) - frequent health checks
+#   - benchmark mode: 900 (15 minutes) - less frequent but more comprehensive tests
+execution_interval_seconds: 120
 
-# Intervalo para fazer benchmark dos DNS (em segundos)
-# Recomendado: 1800 (30 minutos)
-# O programa irá medir latência e atualizar /etc/resolv.conf
-benchmark_interval_seconds: 1800
+# DNS query timeout (in seconds)
+# Default: 2
+# How long to wait for a DNS response before considering it offline
+timeout_seconds: 2
 
-# Caminho do arquivo resolv.conf (opcional)
-# Padrão: /etc/resolv.conf
-# Você pode alterar para testes: /tmp/resolv.conf
+# Path to the resolv.conf file (optional)
+# Default: /etc/resolv.conf
+# You can change it for testing: /tmp/resolv.conf
 resolv_conf_path: "/etc/resolv.conf"

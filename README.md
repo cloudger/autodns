@@ -1,59 +1,79 @@
-# DNS Manager
+# Autodns
 
-Um gerenciador de servidores DNS para Linux com monitoramento automático e benchmarking, escrito em Rust.
+A DNS server manager for Linux with automatic monitoring and benchmarking, written in Rust.
 
-## Problema
+## Problem
 
-Você usa provedores de DNS que podem parar de responder sem aviso (como aconteceu com os servidores IPv6 da Hetzner). Este programa resolve isso:
+You use DNS providers that may stop responding without warning (as happened with Hetzner's IPv6 servers). This program solves this:
 
-- Monitora constantemente a saúde dos servidores DNS
-- Faz benchmark automático e seleciona os mais rápidos
-- Atualiza automaticamente `/etc/resolv.conf` com os melhores servidores
-- Funciona perfeitamente no Rocky Linux 9/10
+- Constantly monitors the health of DNS servers
+- Performs automatic benchmarking and selects the fastest ones (Optional)
+- Automatically updates `/etc/resolv.conf` with the best servers
 
-## Funcionalidades
+## Features
 
-1. **Configuração via YAML**: Lista de servidores DNS configurável
-2. **Modo Check**: Apenas verifica se os DNS estão online/offline
-3. **Modo Benchmark**: Mede latência e seleciona os DNS mais rápidos
-4. **Timer Check**: Verifica saúde dos DNS em intervalos configuráveis
-5. **Timer Benchmark**: Executa benchmark em intervalos configuráveis
-6. **Atualização Automática**: Atualiza `/etc/resolv.conf` com pelo menos 2 servidores DNS
+1. **YAML Configuration**: Configurable list of DNS servers
+2. **FirstOnline Mode**: Checks if DNS servers are online and selects first 2 available
+3. **Benchmark Mode**: Measures latency and selects the 2 fastest DNS servers
+4. **Configurable Interval**: Runs the selected mode at configurable intervals
+5. **Automatic Update**: Updates `/etc/resolv.conf` with the selected DNS servers
 
-## Instalação
+## Installation
 
-### Requisitos
+### Requirements
 
-- Rust 1.70 ou superior
-- Rocky Linux 9/10 (ou qualquer distribuição Linux moderna)
-- Permissões de root/sudo para editar `/etc/resolv.conf`
+- Rust 1.70 or higher
+- Any modern Linux distribution
+- Root/sudo permissions to edit `/etc/resolv.conf`
 
-### Compilar
+### Quick Installation (Recommended)
 
-```bash
-cargo build --release
-```
-
-O binário estará em `target/release/dns-manager`
-
-### Instalar
+Use the automated installation script:
 
 ```bash
-sudo cp target/release/dns-manager /usr/local/bin/
-sudo chmod +x /usr/local/bin/dns-manager
+sudo ./install.sh
 ```
 
-## Configuração
+This script will:
+- Build the binary with musl target
+- Install to `/usr/local/bin/autodns`
+- Create configuration directory `/etc/autodns/`
+- Copy configuration file
+- Install systemd service
+- Validate configuration and permissions
 
-Crie um arquivo `config.yaml`:
+### Manual Compilation
+
+```bash
+cargo build --release --target x86_64-unknown-linux-musl
+```
+
+The binary will be located in `target/x86_64-unknown-linux-musl/release/autodns`
+
+### Manual Install
+
+```bash
+sudo cp target/x86_64-unknown-linux-musl/release/autodns /usr/local/bin/
+sudo chmod +x /usr/local/bin/autodns
+sudo mkdir -p /etc/autodns
+sudo cp config.yaml /etc/autodns/
+```
+
+## Settings
+
+Create a `config.yaml` file:
 
 ```yaml
-# Lista de servidores DNS para monitorar
+# List of DNS servers to monitor
 dns_servers:
   - name: "Cloudflare-1"
     address: "1.1.1.1"
   - name: "Cloudflare-2"
     address: "1.0.0.1"
+  - name: "Cloudflare-IPv6-1"
+    address: "2606:4700:4700::1111"
+  - name: "Cloudflare-IPv6-2"
+    address: "2606:4700:4700::1001"
   - name: "Google-1"
     address: "8.8.8.8"
   - name: "Google-2"
@@ -65,211 +85,199 @@ dns_servers:
   - name: "Hetzner-IPv6-2"
     address: "2a01:4ff:ff00::add:2"
 
-# Modo de operação: "check" (apenas verifica) ou "benchmark" (testa e seleciona)
+# Operating mode: "firstonline" or "benchmark"
 mode: benchmark
 
-# Intervalo para verificar se DNS estão online (em segundos)
-# Recomendado: 120 (2 minutos)
-check_interval_seconds: 120
+# Execution interval (in seconds)
+# The program executes the configured mode at this interval
+# Recommended: 120 for firstonline, 1800 for benchmark
+execution_interval_seconds: 1800
 
-# Intervalo para fazer benchmark (em segundos)
-# Recomendado: 1800 (30 minutos)
-benchmark_interval_seconds: 1800
+# DNS query timeout (in seconds)
+# Default: 2
+# How long to wait for a DNS response before considering it offline
+timeout_seconds: 2
 
-# Caminho do resolv.conf (opcional, padrão: /etc/resolv.conf)
+# Path to resolv.conf (optional, default: /etc/resolv.conf)
 resolv_conf_path: "/etc/resolv.conf"
 ```
 
-## Uso
+## Usage
 
-### Verificar DNS uma vez
+### Run once based on config mode
 
-```bash
-sudo dns-manager --config config.yaml check
-```
-
-### Fazer benchmark uma vez
+The `check` command respects the `mode` setting in your config file:
 
 ```bash
-sudo dns-manager --config config.yaml benchmark
+# With mode: firstonline in config.yaml - uses first 2 online DNS from the list
+# With mode: benchmark in config.yaml - measures latency and uses fastest 2 DNS
+sudo autodns --config config.yaml check
 ```
 
-### Executar como daemon
+### Run as daemon
 
 ```bash
-sudo dns-manager --config config.yaml run
-# ou simplesmente
-sudo dns-manager --config config.yaml
+sudo autodns --config config.yaml run
+# or simply
+sudo autodns --config config.yaml
 ```
 
-## Instalação como Serviço Systemd
+## Systemd Installation as a Service
 
-1. Copie o arquivo de serviço:
+1. Copy the service file:
 
 ```bash
-sudo cp dns-manager.service /etc/systemd/system/
+sudo cp autodns.service /etc/systemd/system/
 ```
 
-2. Edite o arquivo de serviço se necessário:
+2. Edit the service file if necessary:
 
 ```bash
-sudo nano /etc/systemd/system/dns-manager.service
+sudo nano /etc/systemd/system/autodns.service
 ```
 
-3. Crie o diretório de configuração:
+3. Create the configuration directory:
 
 ```bash
-sudo mkdir -p /etc/dns-manager
-sudo cp config.yaml /etc/dns-manager/
+sudo mkdir -p /etc/autodns
+sudo cp config.yaml /etc/autodns/
 ```
 
-4. Habilite e inicie o serviço:
+4. Enable and start the service:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable dns-manager
-sudo systemctl start dns-manager
+sudo systemctl enable autodns
+sudo systemctl start autodns
 ```
 
-5. Verifique o status:
+5. Check the status:
 
 ```bash
-sudo systemctl status dns-manager
+sudo systemctl status autodns
 ```
 
-6. Ver logs:
+6. View logs:
 
 ```bash
-sudo journalctl -u dns-manager -f
+sudo journalctl -u autodns -f
 ```
 
-## Modos de Operação
+## Operating Modes
 
-### Modo Check
+### FirstOnline Mode
 
-- Verifica periodicamente se os DNS estão respondendo
-- Intervalo configurável via `check_interval_seconds`
-- Apenas monitora, não altera `/etc/resolv.conf`
-- Útil para monitoramento e alertas
+- Periodically checks if DNS servers are responding
+- **Updates `/etc/resolv.conf` with the first 2 online DNS servers from the list**
+- Follows the order of DNS servers as configured in `config.yaml`
+- Useful when you want to maintain a specific priority order
+- Recommended interval: 120 seconds (2 minutes)
 
-### Modo Benchmark
+### Benchmark Mode
 
-- Mede a latência de cada servidor DNS
-- Seleciona os 2 servidores mais rápidos
-- Atualiza automaticamente `/etc/resolv.conf`
-- Intervalo configurável via `benchmark_interval_seconds`
-- Também faz verificação de saúde no intervalo `check_interval_seconds`
+- Measures the latency of each DNS server
+- **Updates `/etc/resolv.conf` with the 2 fastest servers based on latency**
+- Useful for automatically optimizing DNS performance
+- Recommended interval: 1800 seconds (30 minutes)
 
-## Funcionamento
+## Operation
 
-### Health Check (a cada 2 minutos)
+### FirstOnline Mode Operation
 
-1. Testa cada servidor DNS fazendo uma consulta para `google.com`
-2. Marca como ONLINE ou OFFLINE
-3. Exibe resultados no log
+1. Tests each DNS server by querying `google.com`
+2. Marks as ONLINE or OFFLINE
+3. Selects the first 2 online DNS servers from the configured list
+4. Creates a backup of `/etc/resolv.conf`
+5. Updates `/etc/resolv.conf` with the selected servers
+6. Repeats every `execution_interval_seconds`
 
-### Benchmark (a cada 30 minutos)
+### Benchmark Mode Operation
 
-1. Testa cada servidor DNS medindo tempo de resposta
-2. Ordena por latência (mais rápido primeiro)
-3. Seleciona os 2 melhores servidores
-4. Cria backup de `/etc/resolv.conf`
-5. Atualiza `/etc/resolv.conf` com os melhores servidores
+1. Tests each DNS server by measuring response time
+2. Measures latency for all servers
+3. Sorts by latency (fastest first)
+4. Selects the 2 fastest servers
+5. Creates a backup of `/etc/resolv.conf`
+6. Updates `/etc/resolv.conf` with the fastest servers
+7. Repeats every `execution_interval_seconds`
 
-## Segurança
+## Security
 
-- Cria backup automático de `/etc/resolv.conf` antes de modificar
-- Verifica permissões antes de iniciar
-- Usa arquivo temporário para gravação atômica
-- Registra todas as operações em log
+- Creates an automatic backup of `/etc/resolv.conf` before modifying
+- Checks permissions before starting
+- Uses a temporary file for atomic writing
+- Logs all operations
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
-dns-manager/
+autodns/
 ├── src/
-│   ├── main.rs           # Aplicação principal e CLI
-│   ├── config.rs         # Parser de configuração YAML
-│   ├── dns_checker.rs    # Lógica de verificação e benchmark
-│   └── resolv_conf.rs    # Gerenciador de /etc/resolv.conf
-├── Cargo.toml            # Dependências Rust
-├── config.yaml           # Configuração exemplo
-├── dns-manager.service   # Serviço systemd
-└── README.md             # Este arquivo
+│   ├── main.rs           # Main application and CLI
+│   ├── config.rs         # YAML configuration parser
+│   ├── dns_checker.rs    # Verification and benchmarking logic
+│   └── resolv_conf.rs    # /etc/resolv.conf manager
+├── Cargo.toml            # Rust Dependencies
+├── config.yaml           # Example configuration
+├── autodns.service   # Systemd service
+└── README.md             # This file
 ```
 
-## Dependências
-
-- `tokio` - Runtime assíncrono
-- `trust-dns-resolver` - Cliente DNS
-- `serde` / `serde_yaml` - Parser YAML
-- `clap` - Parser de argumentos CLI
-- `anyhow` - Tratamento de erros
-- `log` / `env_logger` - Sistema de logs
-- `chrono` - Timestamps
-
-## Troubleshooting
-
-### Erro de permissão
+### Permission error
 
 ```
 Error: No write permission for /etc/resolv.conf
 ```
 
-**Solução**: Execute com `sudo`
+**Solution**: Run with `sudo`
 
-### DNS não estão sendo atualizados
+### DNS are not being updated
 
-1. Verifique se o serviço está rodando:
+1. Check if the service is running:
    ```bash
-   sudo systemctl status dns-manager
+   sudo systemctl status autodns
    ```
 
-2. Verifique o modo de operação no `config.yaml`:
-   ```yaml
-   mode: benchmark  # Deve ser "benchmark" para atualizar
-   ```
-
-3. Verifique logs:
+2. Check the logs:
    ```bash
-   sudo journalctl -u dns-manager -n 100
+   sudo journalctl -u autodns -n 100
    ```
 
-### Todos os DNS estão offline
+3. Verify at least 2 DNS servers are online:
+   ```bash
+   sudo autodns --config config.yaml check
+   ```
 
-- Verifique conectividade de rede
-- Verifique firewall (porta 53 UDP)
-- Teste manualmente: `dig @1.1.1.1 google.com`
+### All DNS servers are offline.
 
-## Exemplos de Uso
+- Check network connectivity
+- Check firewall (UDP port 53)
+- Test manually: `dig @1.1.1.1 google.com`
 
-### Testar configuração
+## Usage Examples
+
+### Test Configuration
 
 ```bash
-# Verificar sintaxe do YAML
-sudo dns-manager --config config.yaml check
+# Run once using the mode from config.yaml (firstonline or benchmark)
+sudo autodns --config config.yaml check
 
-# Fazer benchmark e ver resultados
-sudo dns-manager --config config.yaml benchmark
+# Force benchmark mode to see latency results
+sudo autodns --config config.yaml benchmark
 ```
 
-### Monitoramento contínuo
+### Continuous monitoring
 
 ```bash
-# Modo check apenas (não altera resolv.conf)
-mode: check
-check_interval_seconds: 120  # A cada 2 minutos
+# FirstOnline mode: Uses first 2 online DNS from the configured list
+mode: firstonline
+execution_interval_seconds: 120  # Check and update every 2 minutes
 
-# Modo benchmark (atualiza resolv.conf)
+# Benchmark mode: Uses 2 fastest DNS based on latency
 mode: benchmark
-check_interval_seconds: 120      # Verifica saúde a cada 2 min
-benchmark_interval_seconds: 1800  # Benchmark a cada 30 min
+execution_interval_seconds: 1800  # Benchmark and update every 30 minutes
 ```
 
-## Licença
+## License
 
 MIT
-
-## Autor
-
-Criado para resolver problemas reais de DNS no Rocky Linux com servidores Hetzner.

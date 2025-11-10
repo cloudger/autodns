@@ -26,11 +26,6 @@ impl DnsChecker {
         }
     }
 
-    pub fn with_test_domain(mut self, domain: String) -> Self {
-        self.test_domain = domain;
-        self
-    }
-
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
@@ -113,34 +108,35 @@ impl DnsChecker {
 
         let resolver = TokioAsyncResolver::tokio(resolver_config, resolver_opts);
 
-        // Perform a DNS lookup
-        resolver.lookup_ip(&self.test_domain).await?;
+        // Perform a DNS lookup with explicit timeout wrapper
+        tokio::time::timeout(
+            self.timeout,
+            resolver.lookup_ip(&self.test_domain)
+        ).await??;
 
         Ok(())
     }
 
-    /// Check multiple DNS servers
+    /// Check multiple DNS servers in parallel
     pub async fn check_multiple(&self, servers: &[(IpAddr, String)]) -> Vec<DnsCheckResult> {
-        let mut results = Vec::new();
+        use futures::future::join_all;
 
-        for (address, name) in servers {
-            let result = self.check_dns_online(*address, name).await;
-            results.push(result);
-        }
+        let tasks = servers
+            .iter()
+            .map(|(address, name)| self.check_dns_online(*address, name));
 
-        results
+        join_all(tasks).await
     }
 
-    /// Benchmark multiple DNS servers
+    /// Benchmark multiple DNS servers in parallel
     pub async fn benchmark_multiple(&self, servers: &[(IpAddr, String)]) -> Vec<DnsCheckResult> {
-        let mut results = Vec::new();
+        use futures::future::join_all;
 
-        for (address, name) in servers {
-            let result = self.benchmark_dns(*address, name).await;
-            results.push(result);
-        }
+        let tasks = servers
+            .iter()
+            .map(|(address, name)| self.benchmark_dns(*address, name));
 
-        results
+        join_all(tasks).await
     }
 }
 
