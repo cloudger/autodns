@@ -25,6 +25,7 @@ You use DNS providers that may stop responding without warning (as happened with
 - Rust 1.70 or higher
 - Any modern Linux distribution
 - Root/sudo permissions to edit `/etc/resolv.conf`
+- SELinux policy configuration (for RHEL/Rocky Linux/Fedora) - see [SELINUX.md](SELINUX.md)
 
 ### Quick Installation (Recommended)
 
@@ -162,6 +163,18 @@ sudo systemctl status autodns
 ```bash
 sudo journalctl -u autodns -f
 ```
+
+### SELinux Configuration (RHEL/Rocky Linux/Fedora)
+
+If you're running on a system with SELinux enabled (Rocky Linux, RHEL, Fedora), you need to install the SELinux policy:
+
+```bash
+cd selinux/
+make
+sudo make install
+```
+
+For detailed SELinux troubleshooting and configuration options, see [SELINUX.md](SELINUX.md).
 
 ## Operating Modes
 

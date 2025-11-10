@@ -1,0 +1,94 @@
+policy_module(autodns, 1.0.0)
+
+########################################
+#
+# Autodns SELinux Policy
+#
+# This policy allows the Autodns service to:
+# - Read DNS server configurations
+# - Query DNS servers
+# - Modify /etc/resolv.conf
+# - Create temporary and backup files
+#
+########################################
+
+require {
+    type unconfined_service_t;
+    type init_t;
+    type etc_t;
+    type net_conf_t;
+    type node_t;
+    type dns_port_t;
+    type unreserved_port_t;
+    class file { create write unlink rename open read getattr setattr ioctl lock };
+    class dir { add_name remove_name write search read };
+    class udp_socket { create connect getattr setopt };
+    class tcp_socket { create connect getattr setopt };
+    class netlink_route_socket { bind create getattr nlmsg_read };
+}
+
+########################################
+# Allow autodns to manage /etc/resolv.conf
+########################################
+
+# Allow managing /etc/resolv.conf and related files
+allow unconfined_service_t net_conf_t:file {
+    create write unlink rename open read
+    getattr setattr ioctl lock
+};
+
+# Allow managing files in /etc directory
+allow unconfined_service_t etc_t:file {
+    create write unlink rename open read
+    getattr setattr ioctl lock
+};
+
+# Allow directory operations in /etc
+allow unconfined_service_t etc_t:dir {
+    add_name remove_name write search read
+};
+
+########################################
+# Allow DNS queries
+########################################
+
+# Allow UDP socket operations for DNS queries
+allow unconfined_service_t self:udp_socket {
+    create connect getattr setopt
+};
+
+# Allow TCP socket operations (for DNS over TCP)
+allow unconfined_service_t self:tcp_socket {
+    create connect getattr setopt
+};
+
+# Allow connecting to DNS servers
+allow unconfined_service_t dns_port_t:udp_socket {
+    send_msg recv_msg
+};
+
+allow unconfined_service_t dns_port_t:tcp_socket {
+    name_connect
+};
+
+# Allow network route operations
+allow unconfined_service_t self:netlink_route_socket {
+    bind create getattr nlmsg_read
+};
+
+# Allow connecting to network nodes
+allow unconfined_service_t node_t:udp_socket {
+    node_bind
+};
+
+allow unconfined_service_t node_t:tcp_socket {
+    node_bind
+};
+
+########################################
+# Allow reading configuration
+########################################
+
+# Allow reading autodns configuration from /etc/autodns
+allow unconfined_service_t etc_t:file { read open getattr };
+allow unconfined_service_t etc_t:dir { search read };
