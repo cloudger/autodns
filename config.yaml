@@ -1,0 +1,53 @@
+# DNS Manager Configuration
+#
+# Este arquivo configura o comportamento do DNS Manager
+
+# Lista de servidores DNS para monitorar
+dns_servers:
+  # Cloudflare DNS
+  - name: "Cloudflare-1"
+    address: "1.1.1.1"
+  - name: "Cloudflare-2"
+    address: "1.0.0.1"
+
+  # Google DNS
+  - name: "Google-1"
+    address: "8.8.8.8"
+  - name: "Google-2"
+    address: "8.8.4.4"
+
+  # Quad9 DNS
+  - name: "Quad9"
+    address: "9.9.9.9"
+
+  # OpenDNS
+  - name: "OpenDNS-1"
+    address: "208.67.222.222"
+  - name: "OpenDNS-2"
+    address: "208.67.220.220"
+
+  # Hetzner DNS (IPv6) - Exemplo dos que falharam
+  - name: "Hetzner-IPv6-1"
+    address: "2a01:4ff:ff00::add:1"
+  - name: "Hetzner-IPv6-2"
+    address: "2a01:4ff:ff00::add:2"
+
+# Modo de operação:
+#   - "check": Apenas verifica se os DNS estão online/offline (não altera resolv.conf)
+#   - "benchmark": Testa latência e atualiza /etc/resolv.conf com os melhores
+mode: benchmark
+
+# Intervalo para verificar saúde dos DNS (em segundos)
+# Recomendado: 120 (2 minutos)
+# O programa irá testar se cada DNS está respondendo
+check_interval_seconds: 120
+
+# Intervalo para fazer benchmark dos DNS (em segundos)
+# Recomendado: 1800 (30 minutos)
+# O programa irá medir latência e atualizar /etc/resolv.conf
+benchmark_interval_seconds: 1800
+
+# Caminho do arquivo resolv.conf (opcional)
+# Padrão: /etc/resolv.conf
+# Você pode alterar para testes: /tmp/resolv.conf
+resolv_conf_path: "/etc/resolv.conf"
