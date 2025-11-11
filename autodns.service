@@ -9,7 +9,7 @@ User=root
 Group=root
 
 # Caminho para o binário
-ExecStart=/usr/local/bin/autodns --config /etc/autodns/config.yaml run
+ExecStart=/usr/bin/autodns --config /etc/autodns/config.yaml run
 
 # Reiniciar automaticamente se falhar
 Restart=on-failure

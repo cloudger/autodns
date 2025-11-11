@@ -87,13 +87,13 @@ Label the Autodns binary to allow network operations:
 
 ```bash
 # Add file context
-sudo semanage fcontext -a -t bin_t "/usr/local/bin/autodns"
+sudo semanage fcontext -a -t bin_t "/usr/bin/autodns"
 
 # Apply the context
-sudo restorecon -v /usr/local/bin/autodns
+sudo restorecon -v /usr/bin/autodns
 
 # Verify
-ls -Z /usr/local/bin/autodns
+ls -Z /usr/bin/autodns
 ```
 
 ### Option 4: Use permissive mode for Autodns only (Testing)
@@ -181,7 +181,7 @@ sudo ausearch -m avc -ts today | grep autodns | audit2why
 
 ```bash
 # Binary context
-ls -Z /usr/local/bin/autodns
+ls -Z /usr/bin/autodns
 
 # Service process context
 ps -eZ | grep autodns

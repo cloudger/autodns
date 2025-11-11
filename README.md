@@ -66,7 +66,7 @@ sudo ./install.sh
 
 This script will:
 - Build the binary with musl target
-- Install to `/usr/local/bin/autodns`
+- Install to `/usr/bin/autodns`
 - Create configuration directory `/etc/autodns/`
 - Copy configuration file
 - Install systemd service
@@ -83,8 +83,8 @@ The binary will be located in `target/x86_64-unknown-linux-musl/release/autodns`
 ### Manual Install
 
 ```bash
-sudo cp target/x86_64-unknown-linux-musl/release/autodns /usr/local/bin/
-sudo chmod +x /usr/local/bin/autodns
+sudo cp target/x86_64-unknown-linux-musl/release/autodns /usr/bin/
+sudo chmod +x /usr/bin/autodns
 sudo mkdir -p /etc/autodns
 sudo cp config.yaml /etc/autodns/
 ```
